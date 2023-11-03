@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "whisper-podcast"
+version = "0.1.0"
+description = ""
+authors = ["YoshimatsuSaito <middle158725071@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+openai = "^0.28.1"
+pydub = "^0.25.1"
+python-dotenv = "^1.0.0"
+requests = "^2.31.0"
+black = "^23.10.1"
+isort = "^5.12.0"
+beautifulsoup4 = "^4.12.2"
+lxml = "^4.9.3"
+pandas = "^2.1.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
