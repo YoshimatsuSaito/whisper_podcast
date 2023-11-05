@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup, Tag
 @dataclass(frozen=False)
 class PodcastMetaData:
     """Dataclass for the podcast metadata"""
+
     title: str
     enclosure: str
     pubDate: datetime | None
@@ -26,6 +27,7 @@ class PodcastMetaData:
 @dataclass(frozen=False)
 class PodcastMetaDataCollection:
     """Collection of PodcastMetaData"""
+
     list_podcast_metadata: list[PodcastMetaData]
 
     def __post_init__(self):
@@ -35,7 +37,9 @@ class PodcastMetaDataCollection:
 
     def sort_by_pubdate(self):
         """Sort the metadata list by publication date."""
-        self.list_podcast_metadata.sort(key=lambda x: x.pubDate if x.pubDate else datetime.min)
+        self.list_podcast_metadata.sort(
+            key=lambda x: x.pubDate if x.pubDate else datetime.min
+        )
 
     def assign_ids(self):
         """Assign a zero-padded ID based on the sorted position."""
@@ -48,9 +52,17 @@ class PodcastMetaDataRetriever:
     Input: rss url
     Output: PodcastMetaDataCollection
     """
+
     def __init__(self, url: str) -> None:
         self.url = url
-        self.list_tag = ["title", "enclosure", "pubDate", "duration", "description", "creator"]
+        self.list_tag = [
+            "title",
+            "enclosure",
+            "pubDate",
+            "duration",
+            "description",
+            "creator",
+        ]
 
     def _safe_find(self, item: Tag, tag: str) -> None | str:
         """Returns the text of the tag if it exists, else None"""
@@ -58,15 +70,15 @@ class PodcastMetaDataRetriever:
         if res is None:
             return None
         elif tag == "enclosure":
-            return res['url']
+            return res["url"]
         else:
             return res.text
-    
+
     def _get_items(self) -> list[Tag]:
         """Returns a list of item from the podcast"""
         r = requests.get(self.url)
-        soup = BeautifulSoup(r.content, 'xml')
-        items = soup.find_all('item')
+        soup = BeautifulSoup(r.content, "xml")
+        items = soup.find_all("item")
         return items
 
     def get_data(self) -> PodcastMetaDataCollection:
@@ -77,16 +89,15 @@ class PodcastMetaDataRetriever:
         for item in items:
             pubDate = self._safe_find(item, "pubDate")
             pubDate = parsedate_to_datetime(pubDate) if pubDate is not None else None
-            
+
             podcastmetadata = PodcastMetaData(
-                title = self._safe_find(item, "title"),
-                enclosure = self._safe_find(item, "enclosure"),
-                pubDate = pubDate,
-                duration = self._safe_find(item, "duration"),
-                description = self._safe_find(item, "description"),
-                creator = self._safe_find(item, "creator"),
+                title=self._safe_find(item, "title"),
+                enclosure=self._safe_find(item, "enclosure"),
+                pubDate=pubDate,
+                duration=self._safe_find(item, "duration"),
+                description=self._safe_find(item, "description"),
+                creator=self._safe_find(item, "creator"),
             )
             list_podcast_metadata.append(podcastmetadata)
-        
+
         return PodcastMetaDataCollection(list_podcast_metadata=list_podcast_metadata)
-   
