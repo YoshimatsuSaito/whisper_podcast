@@ -97,24 +97,9 @@ class PodcastDataProcessingPipeline:
             )
             self.podcast_data_collection.list_podcast_data.append(podcast_data)
 
-    def download_audio(
-        self, num_download: int | None = None, from_now: bool = True
-    ) -> None:
+    def download_audio(self) -> None:
         """Download the audio from the podcast by download_and_chunk_audio"""
-        # Sort the podcast data by id
-        if from_now:
-            logger.info("Download audios from now to past...")
-            self.podcast_data_collection.sort_by_id(reverse=from_now)
-
-        # Download the audio and add the audio dir path to the podcast data
-        if num_download is None:
-            num_download = len(self.podcast_data_collection.list_podcast_data)
-        logger.info(
-            f"Downloading {num_download} audios and adding downloaded dir to podcast data..."
-        )
-        for podcast_data in self.podcast_data_collection.list_podcast_data[
-            :num_download
-        ]:
+        for podcast_data in self.podcast_data_collection.list_podcast_data:
             chunk_dir = download_and_chunk_audio(
                 url=podcast_data.enclosure,
                 title=f"{podcast_data.id}_{podcast_data.title}",
@@ -122,24 +107,9 @@ class PodcastDataProcessingPipeline:
             )
             podcast_data.audio_dir_path = chunk_dir
 
-    def transcribe(
-        self, num_transcript: int | None = None, from_now: bool = True
-    ) -> None:
+    def transcribe(self) -> None:
         """Transcribe the audio from the podcast"""
-        # Sort the podcast data by id
-        if from_now:
-            logger.info("Transcribing audios from now to past...")
-            self.podcast_data_collection.sort_by_id(reverse=from_now)
-
-        # Transcribe the audio and add the transcript to the podcast data
-        if num_transcript is None:
-            num_transcript = len(self.podcast_data_collection.list_podcast_data)
-        logger.info(
-            f"Transcribing {num_transcript} audios and adding transcript to podcast data..."
-        )
-        for podcast_data in self.podcast_data_collection.list_podcast_data[
-            :num_transcript
-        ]:
+        for podcast_data in self.podcast_data_collection.list_podcast_data:
             list_audio_path = sorted(
                 podcast_data.audio_dir_path.iterdir(),
                 key=lambda path: str(path).lower(),
@@ -164,7 +134,7 @@ class PodcastDataProcessingPipeline:
             podcast_data.article = article
             podcast_data.list_article_detail = list_article_detail
     
-    def translate_article(self, language: str, model_name: str = "gpt-3.5-turbo-1106", max_tokens_detail: int = 2048, max_tokens_concat: int = 4096) -> None:
+    def translate_article(self, language: str = "english", model_name: str = "gpt-3.5-turbo-1106", max_tokens_detail: int = 2048, max_tokens_concat: int = 4096) -> None:
         """Translate article from the transcript"""
         for podcast_data in self.podcast_data_collection.list_podcast_data:
             translated_article = translate(text=podcast_data.article, language=language, model_name=model_name, max_tokens=max_tokens_concat)
