@@ -6,7 +6,7 @@ dotenv.load_dotenv()
 
 def translate(text: str, language: str, model_name: str, max_tokens: int) -> str:
     """Translate the article to the specified language"""
-    
+
     user_message = f"""
     You are a excellent translator to translate the text to {language}.
 
@@ -16,7 +16,7 @@ def translate(text: str, language: str, model_name: str, max_tokens: int) -> str
     Text to translate: {text}
     """
 
-    openai.ChatCompletion.create(
+    res = openai.ChatCompletion.create(
         model=model_name,
         messages=[{"role": "user", "content": user_message}],
         max_tokens=max_tokens
