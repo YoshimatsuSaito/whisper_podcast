@@ -11,8 +11,8 @@ sys.path.append(os.path.join(currentdir, "../"))
 from modules.audio_downloader import download_and_chunk_audio
 from modules.audio_metadata_retriever import PodcastMetaDataRetriever
 from modules.transcriber import Transcriber
-
-# from modules.article_generator import ArticleGenerator
+from modules.article_generator import ArticleGenerator
+from modules.translator import translate
 
 
 # Set up the logger
@@ -48,6 +48,11 @@ class PodcastData:
 
     # Add data by article_generator
     article: str | None = None
+    list_article_detail: list[str] | None = None
+
+    # Add data by translator
+    translated_article: str | None = None
+    list_translated_article_detail: list[str] | None = None
 
 
 @dataclass(frozen=False)
@@ -145,6 +150,28 @@ class PodcastDataProcessingPipeline:
                 transcriber = Transcriber(list_audio_path=list_audio_path)
                 podcast_data.transcript = transcriber.get_full_transcript()
 
-    def generate_article(self) -> None:
+    def generate_article(self, model_name: str = "gpt-3.5-turbo-1106", max_tokens_detail: int = 2048, max_tokens_concat: int = 4096) -> None:
         """Generate article from the transcript"""
-        pass
+        for podcast_data in self.podcast_data_collection.list_podcast_data:
+            article_generator = ArticleGenerator(
+                title=podcast_data.title,
+                text=podcast_data.transcript, 
+                model_name=model_name,
+            )
+            list_article_detail = article_generator.generate_articles(max_tokens=max_tokens_detail)
+            article = article_generator.concat_articles(texts=list_article_detail, max_tokens=max_tokens_concat)
+
+            podcast_data.article = article
+            podcast_data.list_article_detail = list_article_detail
+    
+    def translate_article(self, language: str, model_name: str = "gpt-3.5-turbo-1106", max_tokens_detail: int = 2048, max_tokens_concat: int = 4096) -> None:
+        """Translate article from the transcript"""
+        for podcast_data in self.podcast_data_collection.list_podcast_data:
+            translated_article = translate(text=podcast_data.article, language=language, model_name=model_name, max_tokens=max_tokens_concat)
+            list_translated_article_detail = []
+            for article_detail in podcast_data.list_article_detail:
+                translated_article_detail = translate(text=article_detail, language=language, model_name=model_name, max_tokens=max_tokens_detail)
+                list_translated_article_detail.append(translated_article_detail)
+            
+            podcast_data.translated_article = translated_article
+            podcast_data.list_translated_article_detail = list_translated_article_detail

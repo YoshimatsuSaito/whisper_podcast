@@ -21,6 +21,7 @@ ffmpeg-python = "^0.2.0"
 tiktoken = "^0.5.1"
 langchain = "^0.0.330"
 flake8 = "^6.1.0"
+tqdm = "^4.66.1"
 
 
 [build-system]
