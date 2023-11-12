@@ -1,7 +1,11 @@
+import os
+
 import dotenv
 import openai
 
 dotenv.load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 def translate(text: str, language: str, model_name: str, max_tokens: int) -> str:
@@ -19,8 +23,7 @@ def translate(text: str, language: str, model_name: str, max_tokens: int) -> str
     res = openai.ChatCompletion.create(
         model=model_name,
         messages=[{"role": "user", "content": user_message}],
-        max_tokens=max_tokens
+        max_tokens=max_tokens,
     )
 
     return res["choices"][0]["message"]["content"]
-

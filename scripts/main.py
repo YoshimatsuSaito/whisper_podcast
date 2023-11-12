@@ -7,7 +7,6 @@ sys.path.append(os.path.join(currentdir, "../"))
 
 from pipeline.pipeline import PodcastDataProcessingPipeline
 
-
 if __name__ == "__main__":
     """Sample usage of the pipeline"""
     url = "https://your_podcast.rss"

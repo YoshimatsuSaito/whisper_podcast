@@ -1,6 +1,6 @@
-import dotenv
 import os
 
+import dotenv
 import openai
 from langchain.chat_models import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -8,22 +8,38 @@ from tqdm import tqdm
 
 dotenv.load_dotenv()
 
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 class ArticleGenerator:
     """Generate article from the podcast transcript"""
-    def __init__(self, title: str, text: str, model_name: str = "gpt-3.5-turbo", chunk_size: int=1024, chunk_overlap: int = 0) -> None:
+
+    def __init__(
+        self,
+        title: str,
+        text: str,
+        model_name: str = "gpt-3.5-turbo",
+        chunk_size: int = 1024,
+        chunk_overlap: int = 0,
+    ) -> None:
         self.model_name = model_name
-        self.llm = ChatOpenAI(temperature=0, openai_api_key=os.environ["OPENAI_API_KEY"], model_name=self.model_name)
+        self.llm = ChatOpenAI(
+            temperature=0,
+            openai_api_key=os.environ["OPENAI_API_KEY"],
+            model_name=self.model_name,
+        )
         self.title = title
         self.text = text
-        self.list_split_text = self._split_text(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        self.list_split_text = self._split_text(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
 
     def _split_text(self, chunk_size: int, chunk_overlap: int) -> list[str]:
         """Split the text into multiple documents"""
         text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            model_name=self.model_name, 
-            chunk_size = chunk_size,
-            chunk_overlap  = chunk_overlap,
+            model_name=self.model_name,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
         )
         texts = text_splitter.split_text(self.text)
         return texts
@@ -53,12 +69,14 @@ class ArticleGenerator:
         )
 
         return res["choices"][0]["message"]["content"]
-    
+
     def generate_articles(self, max_tokens: int) -> list[str]:
         """Generate articles from the transcript"""
         list_article = []
         for text in tqdm(self.list_split_text):
-            article = self._generate_article(text=text, title=self.title, max_tokens=max_tokens)
+            article = self._generate_article(
+                text=text, title=self.title, max_tokens=max_tokens
+            )
 
             list_article.append(f"{article} \n\n")
         return list_article

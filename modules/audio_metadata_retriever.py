@@ -46,6 +46,33 @@ class PodcastMetaDataCollection:
         for i, podcast_metadata in enumerate(self.list_podcast_metadata, start=1):
             podcast_metadata.id = str(i).zfill(4)
 
+    def to_dataframe(self) -> pd.DataFrame:
+        """Create a dataframe from the list of PodcastMetaData"""
+        df = pd.DataFrame(
+            [
+                [
+                    podcast_metadata.id,
+                    podcast_metadata.title,
+                    podcast_metadata.enclosure,
+                    podcast_metadata.pubDate,
+                    podcast_metadata.duration,
+                    podcast_metadata.description,
+                    podcast_metadata.creator,
+                ]
+                for podcast_metadata in self.list_podcast_metadata
+            ],
+            columns=[
+                "id",
+                "title",
+                "enclosure",
+                "pubDate",
+                "duration",
+                "description",
+                "creator",
+            ],
+        )
+        return df
+
 
 class PodcastMetaDataRetriever:
     """Retrieves the podcast audio from the given url
