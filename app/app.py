@@ -37,6 +37,10 @@ if "article" not in st.session_state:
     st.session_state["article"] = None
 if "list_article_detail" not in st.session_state:
     st.session_state["list_article_detail"] = None
+if "translated" not in st.session_state:
+    st.session_state["translated"] = False
+if "language_to_translate" not in st.session_state:
+    st.session_state["language_to_translate"] = None
 
 # Title and rss feed url
 st.title("Podcast article generator")
@@ -62,6 +66,8 @@ if st.session_state["current_episode_id"] != df_episode["id"]:
     st.session_state["generated"] = False
     st.session_state["article"] = None
     st.session_state["list_article_detail"] = None
+    st.session_state["translated"] = False
+    st.session_state["language_to_translate"] = None
 
 # Show information of the episode
 st.markdown(f"""
@@ -117,20 +123,15 @@ if is_generate and not st.session_state["generated"]:
 
 # Show article
 if st.session_state["list_article_detail"] is not None:
-    for article_detail in st.session_state["list_article_detail"]:
-        st.markdown("---")
-        st.markdown(article_detail)
+    st.markdown(st.session_state["article"])
 
 # Translate article
 if st.session_state["generated"]:
     language_to_translate = st.text_input("Enter language to translate. If translation is not needed, skip this.", value=None)
-    if language_to_translate is not None:
+    if language_to_translate is not None and not st.session_state["translated"] and st.session_state["language_to_translate"] != language_to_translate:
         with st.spinner("Translating... Please wait."):
             translated_article = translate(text=st.session_state["article"], language=language_to_translate, model_name="gpt-3.5-turbo-1106", max_tokens=4096)
-            list_translated_article_detail = []
-            for article_detail in st.session_state["list_article_detail"]:
-                translated_article_detail = translate(text=article_detail, language=language_to_translate, model_name="gpt-3.5-turbo-1106", max_tokens=2048)
-                list_translated_article_detail.append(translated_article_detail)
             st.info("Translation completed")
+        st.session_state["language_to_translate"] = language_to_translate
+        st.session_state["translated"] = True
         st.session_state["article"] = translated_article
-        st.session_state["list_article_detail"] = list_translated_article_detail
