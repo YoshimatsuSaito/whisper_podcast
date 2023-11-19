@@ -132,10 +132,10 @@ class PodcastDataProcessingPipeline:
                 text=podcast_data.transcript,
                 model_name=model_name,
             )
-            list_article_detail = article_generator.generate_articles(
+            list_article_detail = article_generator.get_list_summary(
                 max_tokens=max_tokens_detail
             )
-            article = article_generator.concat_articles(
+            article = article_generator.summarize_summaries(
                 texts=list_article_detail, max_tokens=max_tokens_concat
             )
 

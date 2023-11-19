@@ -18,19 +18,15 @@ class Transcriber:
         self,
         list_audio_path: list[Path],
         model_name: str = "whisper-1",
-        language: str = "en",
     ) -> None:
         self.model_name = model_name
-        self.language = language
         self.list_audio_path = list_audio_path
 
     @staticmethod
-    def transcribe(audio_file_path: Path, model_name: str, language: str) -> str:
+    def transcribe(audio_file_path: Path, model_name: str) -> str:
         """Transcribes the audio file using the OpenAI API"""
         with audio_file_path.open("rb") as audio_file:
-            transcript = openai.Audio.transcribe(
-                model_name, audio_file, verbose=True, language=language
-            )
+            transcript = openai.Audio.transcribe(model_name, audio_file, verbose=True)
         return transcript["text"]
 
     def get_full_transcript(self) -> str:
@@ -39,8 +35,6 @@ class Transcriber:
         for audio_path in self.list_audio_path:
             if audio_path.is_file() and audio_path.suffix == ".mp3":
                 print(f"Transcribing {audio_path.name}...")
-                transcript = Transcriber.transcribe(
-                    audio_path, self.model_name, self.language
-                )
+                transcript = Transcriber.transcribe(audio_path, self.model_name)
                 transcript_full += transcript
         return transcript_full

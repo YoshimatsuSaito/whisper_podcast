@@ -44,19 +44,20 @@ class ArticleGenerator:
         texts = text_splitter.split_text(self.text)
         return texts
 
-    def _generate_article(self, title: str, text: str, max_tokens: int) -> str:
-        """Generate article from the transcript"""
+    def _summarize_transcript(self, title: str, text: str, max_tokens: int) -> str:
+        """Generate summary from the transcript"""
         user_message = f"""
-        You are a writer who is writing an article about the podcast episode.
-        The title of the episode is {title}.
-
-        - Read the podcast transcript and create a article based on its content, maintaining the distinctive atmosphere of the episode.
-        - Choose an article style that matches the characteristics of the episode (ex. if it is cheerful, the article should also cheeful).
-        - To convey the atmosphere of the episode, you should select and directly quote important statements from the transcription.
-        - Organize the content into clearly divided sections based on its content. 
-        - The article should be interesting for the reader, so you should avoid just summarizing the content of the episode.
-        - Write the article in the same language as the transcript.
+        Your task is to expertly summarize the content of a podcast.
+        The podcast title is {title}. 
         
+        As you read through the transcript, please adhere to the following requirements in your summary:
+        
+        - Match the Tone: The tone of your summary should align with the atmosphere of the content being discussed. If the subject matter is serious, maintain a formal tone; conversely, if the content is light-hearted, reflect that in a more casual style.
+        - Sectional Breakdown: Divide your summary into sections based on different topics discussed in the podcast.
+        - Language Consistency: Ensure that the summary is written in the same language as the transcript.
+        - Caution: The transcript for summarization is a segment of a larger podcast. When you summarize, focus exclusively on the segment provided. It's important to remember not to add any concluding remarks or extrapolations beyond what is presented in this specific portion. Your task is to create a concise and accurate summary of this given segment alone, adhering strictly to the content it contains. 
+        - Format: The output should be in markdown format. Each section should start with a header '###' and the header should be the topic of the section. Do not add title header of the summary, just the sections.
+
         The transcript of the episode is as follows:
 
         {text}
@@ -70,35 +71,34 @@ class ArticleGenerator:
 
         return res["choices"][0]["message"]["content"]
 
-    def generate_articles(self, max_tokens: int) -> list[str]:
-        """Generate articles from the transcript"""
+    def get_list_summary(self, max_tokens: int) -> list[str]:
+        """Generate summaries from transcripts"""
         list_article = []
         for text in tqdm(self.list_split_text):
-            article = self._generate_article(
+            article = self._summarize_transcript(
                 text=text, title=self.title, max_tokens=max_tokens
             )
 
             list_article.append(f"{article} \n\n")
         return list_article
 
-    def concat_articles(self, texts: list[str], max_tokens: int) -> str:
-        """Concatenate the articles into one article"""
-        articles = "".join(texts)
+    def summarize_summaries(self, texts: list[str], max_tokens: int) -> str:
+        """Summarize the summaries"""
+        summaries = "".join(texts)
 
         user_message = f"""
-        Please connect the articles from various sections of the podcast. 
-        The title of the podcast episode is '{self.title}'.
+        You are a professional summarizer.
+        You will be provided with a text that is a combination of summaries from different segments of a podcast. 
+        Your task is to create a further condensed summary of this combined text. While doing so, please ensure to:
 
-        You should follow these guidelines:
-        - Read the text and, where adjacent sections contain duplicated content, consolidate them. 
-        - If there are different writing styles throughout the text, unify them into a single style. 
-        - DO NOT summarize or make any other alterations beyond these.
-        - Output should be in the same language as the articles.
-        - Output should be in the markdown format.
+        - Preserve the Tone: Maintain the atmosphere and style of the original summaries. Whether the content is serious, humorous, or of any other tone, your summary should reflect that.
+        - Language Consistency: The summary should be in the same language as the provided text.
+        - Topic-Based Organization: Structure your summary by dividing it into sections based on the different topics covered in the summaries.
+        - Format: The output should be in markdown format. Each section should start with a header '###' and the header should be the topic of the section. Summary should start with title header '##'.
+        
+        Here are the combination of summaries you need to summarize:
 
-        Here are the individual sections you need to connect:
-
-        {articles}
+        {summaries}
         """
 
         res = openai.ChatCompletion.create(
