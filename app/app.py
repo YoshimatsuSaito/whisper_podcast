@@ -46,8 +46,13 @@ if "list_summary_detail_translated" not in st.session_state:
 
 # Title and rss feed url
 st.title("Podcast summary generator")
+st.markdown(
+    """
+    This app generates a summary of an episode of any podcasts you selected
+    """
+)
 url = st.text_input(
-    "Enter podcast RSS feed URL", value="https://podcasts.files.bbci.co.uk/p02nrsjn.rss"
+    "Enter a podcast RSS feed URL", value="https://podcasts.files.bbci.co.uk/p02nrsjn.rss"
 )
 
 # Get metadata of podcast episodes
@@ -58,7 +63,8 @@ list_episode_label = [
 ]
 
 # Select episode
-episode = st.selectbox("Select episode", list_episode_label)
+episode = st.selectbox("Select an episode from the podcast channel", list_episode_label)
+st.markdown("<br>", unsafe_allow_html=True)
 idx = list_episode_label.index(episode)
 df_episode = df.iloc[idx]
 
@@ -75,7 +81,7 @@ if st.session_state["current_episode_id"] != df_episode["id"]:
 # Show information of the episode
 st.markdown(
     f"""
-#### {df_episode['title']}
+#### Selected episode: {df_episode['title']}
 """
 )
 with st.expander("Show information of the episode"):
@@ -89,10 +95,12 @@ with st.expander("Show information of the episode"):
     """
     )
     st.markdown(df_episode["description"], unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Generate summary
 cols = st.columns(3)
-is_generate = cols[1].button("Generate a summary")
+is_generate = cols[1].button("Generate a summary!")
+st.markdown("<br>", unsafe_allow_html=True)
 if is_generate and not st.session_state["generated"]:
     output_dir = Path("/workspaces/whisper_podcast/data")
     title = f"{df_episode['id']}_{df_episode['title']}"
@@ -172,32 +180,36 @@ if is_generate and not st.session_state["generated"]:
 
 # Show summary
 if st.session_state["generated"]:
-    with st.expander("Show summary"):
+    st.subheader("Generated contents")
+    with st.expander("Summary"):
         st.markdown(st.session_state["summary"])
-    with st.expander("Show detailed summary"):
+    with st.expander("Detailed summary"):
         for idx, summary_detail in enumerate(st.session_state["list_summary_detail"]):
             st.subheader(f"Segment {idx+1}")
             st.markdown(summary_detail)
-    with st.expander("Show transcript"):
+    with st.expander("Transcript"):
         st.markdown(st.session_state["transcript"])
-    if st.session_state["summary_translated"] is not None:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.session_state["summary_translated"] is not None and st.session_state["list_summary_detail_translated"] is not None:
+        st.subheader("Translated contents")
         with st.expander("Show summary translated"):
             st.markdown(st.session_state["summary_translated"])
-    if st.session_state["list_summary_detail_translated"] is not None:
         with st.expander("Show detailed summary translated"):
             for idx, summary_detail_translated in enumerate(st.session_state["list_summary_detail_translated"]):
                 st.subheader(f"Segment {idx+1}")
                 st.markdown(summary_detail_translated)
+        st.markdown("<br>", unsafe_allow_html=True)
 
 # Translate summary
 if st.session_state["generated"]:
+    st.subheader("Translation")
     language_to_translate = st.text_input(
         "Enter language to translate. If translation is not needed, skip this.",
         value=None,
     )
     cols_translate = st.columns(3)
-    is_translate = cols_translate[1].button("Translate this summary")
-    if language_to_translate is None:
+    is_translate = cols_translate[1].button("Translate this summary!")
+    if language_to_translate is None and is_translate:
         st.warning("Please enter language to translate.")
     elif is_translate:
         progress_text = "Translating summary... Please wait."
