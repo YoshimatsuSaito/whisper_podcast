@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
 
+import dotenv
 import pandas as pd
 import streamlit as st
 
@@ -8,6 +10,9 @@ from modules.audio_downloader import download_and_chunk_audio
 from modules.audio_metadata_retriever import PodcastMetaDataRetriever
 from modules.transcriber import Transcriber
 from modules.translator import translate
+
+dotenv.load_dotenv()
+OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR"))
 
 
 @st.cache_data
@@ -47,7 +52,8 @@ st.markdown(
     """
 )
 url = st.text_input(
-    "Enter a podcast RSS feed URL", value="https://podcasts.files.bbci.co.uk/p02nrsjn.rss"
+    "Enter a podcast RSS feed URL",
+    value="https://podcasts.files.bbci.co.uk/p02nrsjn.rss",
 )
 
 # Get metadata of podcast episodes
@@ -97,9 +103,8 @@ cols = st.columns(3)
 is_generate = cols[1].button("Generate a summary!")
 st.markdown("<br>", unsafe_allow_html=True)
 if is_generate and not st.session_state["generated"]:
-    output_dir = Path("/workspaces/whisper_podcast/data")
     title = f"{df_episode['id']}_{df_episode['title']}"
-    chunk_dir = output_dir / f"{title}"
+    chunk_dir = OUTPUT_DIR / f"{title}"
     # Download and chunk audio
     with st.spinner("Downloading and chunking audio..."):
         if chunk_dir.exists():
@@ -116,7 +121,7 @@ if is_generate and not st.session_state["generated"]:
     progress_text = "Transcribing audio... Please wait."
     transcript_file_path = chunk_dir / "transcript.txt"
     if transcript_file_path.exists():
-        with open(transcript_file_path, 'r') as f:
+        with open(transcript_file_path, "r") as f:
             st.session_state["transcript"] = f.read()
     else:
         progress_bar = st.progress(0, text=progress_text)
@@ -131,7 +136,7 @@ if is_generate and not st.session_state["generated"]:
             progress_bar.progress((idx + 1) / len(list_audio_path), text=progress_text)
         progress_bar.empty()
         st.session_state["transcript"] = "".join(list_transcript)
-        with open(chunk_dir / "transcript.txt", 'w') as f:
+        with open(chunk_dir / "transcript.txt", "w") as f:
             f.write(st.session_state["transcript"])
     st.info("Successfully transcribed audio")
     with st.expander("Show the transcription"):
@@ -185,12 +190,17 @@ if st.session_state["generated"]:
     with st.expander("Transcript"):
         st.markdown(st.session_state["transcript"])
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.session_state["summary_translated"] is not None and st.session_state["list_summary_detail_translated"] is not None:
+    if (
+        st.session_state["summary_translated"] is not None
+        and st.session_state["list_summary_detail_translated"] is not None
+    ):
         st.subheader("Translated contents")
         with st.expander("Show summary translated"):
             st.markdown(st.session_state["summary_translated"])
         with st.expander("Show detailed summary translated"):
-            for idx, summary_detail_translated in enumerate(st.session_state["list_summary_detail_translated"]):
+            for idx, summary_detail_translated in enumerate(
+                st.session_state["list_summary_detail_translated"]
+            ):
                 st.subheader(f"Segment {idx+1}")
                 st.markdown(summary_detail_translated)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -229,9 +239,12 @@ if st.session_state["generated"]:
             )
             list_summary_detail_translated.append(f"{translated_summary_detail} \n\n")
             progress_bar.progress(
-                (idx + 2) / (len(st.session_state["list_summary_detail"]) + 1), text=progress_text
+                (idx + 2) / (len(st.session_state["list_summary_detail"]) + 1),
+                text=progress_text,
             )
         progress_bar.empty()
-        st.session_state["list_summary_detail_translated"] = list_summary_detail_translated
+        st.session_state[
+            "list_summary_detail_translated"
+        ] = list_summary_detail_translated
 
         st.rerun()
