@@ -1,12 +1,7 @@
-import os
-import sys
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-
-currentdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(currentdir, "../"))
 
 from modules.article_generator import ArticleGenerator
 from modules.audio_downloader import download_and_chunk_audio
