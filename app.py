@@ -113,7 +113,7 @@ if is_generate and not st.session_state["generated"]:
             chunk_dir = download_and_chunk_audio(
                 url=df_episode["enclosure"],
                 title=f"{df_episode['id']}_{df_episode['title']}",
-                output_dir=Path("/workspaces/whisper_podcast/data"),
+                output_dir=OUTPUT_DIR,
             )
     st.info("Successfully downloaded audio")
 
