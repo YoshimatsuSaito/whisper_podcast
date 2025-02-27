@@ -1,14 +1,9 @@
-import os
-
-import dotenv
-import openai
-
-dotenv.load_dotenv()
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from openai import OpenAI
 
 
-def translate(text: str, language: str, model_name: str, max_tokens: int) -> str:
+def translate(
+    text: str, language: str, client: OpenAI, model_name: str, max_tokens: int
+) -> str:
     """Translate the article to the specified language"""
 
     user_message = f"""
@@ -20,10 +15,10 @@ def translate(text: str, language: str, model_name: str, max_tokens: int) -> str
     Text to translate: {text}
     """
 
-    res = openai.ChatCompletion.create(
+    res = client.chat.completions.create(
         model=model_name,
         messages=[{"role": "user", "content": user_message}],
         max_tokens=max_tokens,
     )
 
-    return res["choices"][0]["message"]["content"]
+    return res.choices[0].message.content

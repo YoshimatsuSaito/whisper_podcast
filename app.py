@@ -1,18 +1,25 @@
+import os
 from pathlib import Path
 
 import dotenv
 import pandas as pd
 import streamlit as st
+from openai import OpenAI
 
 from modules.article_generator import ArticleGenerator
 from modules.audio_downloader import download_and_chunk_audio
 from modules.audio_metadata_retriever import PodcastMetaDataRetriever
-from modules.transcriber import Transcriber
+from modules.transcriber import transcribe
 from modules.translator import translate
 
 dotenv.load_dotenv()
 
+# constants
 OUTPUT_DIR = Path("./output")
+CLIENT = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+TRANSCRIBE_MODEL_NAME = "whisper-1"
+MODEL_NAME = "gpt-4o-mini"
+CHUNK_SIZE = 4096
 
 
 @st.cache_data
@@ -82,16 +89,16 @@ if st.session_state["current_episode_id"] != df_episode["id"]:
 # Show information of the episode
 st.markdown(
     f"""
-#### Selected episode: {df_episode['title']}
+#### Selected episode: {df_episode["title"]}
 """
 )
 with st.expander("Show information of the episode"):
     st.markdown(
         f"""
-    - Creator: {df_episode['creator']}
-    - Publication date: {df_episode['pubDate_str']}
-    - Duration: {df_episode['duration']}
-    - URL: [Link]({df_episode['enclosure']})
+    - Creator: {df_episode["creator"]}
+    - Publication date: {df_episode["pubDate_str"]}
+    - Duration: {df_episode["duration"]}
+    - URL: [Link]({df_episode["enclosure"]})
     - Description: 
     """
     )
@@ -131,7 +138,11 @@ if is_generate and not st.session_state["generated"]:
         )
         list_transcript = []
         for idx, audio_path in enumerate(list_audio_path):
-            transcript = Transcriber.transcribe(audio_path, "whisper-1")
+            transcript = transcribe(
+                client=CLIENT,
+                audio_file_path=audio_path,
+                model_name=TRANSCRIBE_MODEL_NAME,
+            )
             list_transcript.append(transcript)
             progress_bar.progress((idx + 1) / len(list_audio_path), text=progress_text)
         progress_bar.empty()
@@ -148,12 +159,14 @@ if is_generate and not st.session_state["generated"]:
     article_generator = ArticleGenerator(
         title=df_episode["title"],
         text=st.session_state["transcript"],
-        model_name="gpt-3.5-turbo-1106",
+        client=CLIENT,
+        model_name=MODEL_NAME,
+        chunk_size=CHUNK_SIZE,
     )
     list_summary_detail = []
     for idx, text in enumerate(article_generator.list_split_text):
-        summary_detail = article_generator._summarize_transcript(
-            text=text, title=article_generator.title, max_tokens=2048
+        summary_detail = article_generator.summarize_transcript(
+            text=text, title=article_generator.title, max_tokens=CHUNK_SIZE * 2
         )
         list_summary_detail.append(f"{summary_detail} \n\n")
         progress_bar.progress(
@@ -164,13 +177,13 @@ if is_generate and not st.session_state["generated"]:
     st.info("Successfully summarized each segment of the episode")
     with st.expander("Show summaries of each segment of the episode."):
         for idx, summary_detail in enumerate(st.session_state["list_summary_detail"]):
-            st.subheader(f"Segment {idx+1}")
+            st.subheader(f"Segment {idx + 1}")
             st.markdown(summary_detail)
 
     # Summarize summaries
     with st.spinner("Summarizing summaries... Please wait."):
         summary = article_generator.summarize_summaries(
-            texts=list_summary_detail, max_tokens=4096
+            texts=list_summary_detail, max_tokens=CHUNK_SIZE * 2
         )
         st.session_state["summary"] = summary
 
@@ -185,7 +198,7 @@ if st.session_state["generated"]:
         st.markdown(st.session_state["summary"])
     with st.expander("Detailed summary"):
         for idx, summary_detail in enumerate(st.session_state["list_summary_detail"]):
-            st.subheader(f"Segment {idx+1}")
+            st.subheader(f"Segment {idx + 1}")
             st.markdown(summary_detail)
     with st.expander("Transcript"):
         st.markdown(st.session_state["transcript"])
@@ -201,7 +214,7 @@ if st.session_state["generated"]:
             for idx, summary_detail_translated in enumerate(
                 st.session_state["list_summary_detail_translated"]
             ):
-                st.subheader(f"Segment {idx+1}")
+                st.subheader(f"Segment {idx + 1}")
                 st.markdown(summary_detail_translated)
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -222,8 +235,9 @@ if st.session_state["generated"]:
         translated_summary = translate(
             text=st.session_state["summary"],
             language=language_to_translate,
-            model_name="gpt-3.5-turbo-1106",
-            max_tokens=4096,
+            client=CLIENT,
+            model_name=MODEL_NAME,
+            max_tokens=CHUNK_SIZE * 2,
         )
         progress_bar.progress(
             1 / (len(st.session_state["list_summary_detail"]) + 1), text=progress_text
@@ -234,8 +248,9 @@ if st.session_state["generated"]:
             translated_summary_detail = translate(
                 text=summary_detail,
                 language=language_to_translate,
-                model_name="gpt-3.5-turbo-1106",
-                max_tokens=4096,
+                client=CLIENT,
+                model_name=MODEL_NAME,
+                max_tokens=CHUNK_SIZE * 2,
             )
             list_summary_detail_translated.append(f"{translated_summary_detail} \n\n")
             progress_bar.progress(
@@ -243,8 +258,8 @@ if st.session_state["generated"]:
                 text=progress_text,
             )
         progress_bar.empty()
-        st.session_state[
-            "list_summary_detail_translated"
-        ] = list_summary_detail_translated
+        st.session_state["list_summary_detail_translated"] = (
+            list_summary_detail_translated
+        )
 
         st.rerun()

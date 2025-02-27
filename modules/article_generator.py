@@ -1,14 +1,7 @@
-import os
+from openai import OpenAI
 
-import dotenv
-import openai
-from langchain.chat_models import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from tqdm import tqdm
-
-dotenv.load_dotenv()
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 class ArticleGenerator:
@@ -18,16 +11,13 @@ class ArticleGenerator:
         self,
         title: str,
         text: str,
-        model_name: str = "gpt-3.5-turbo",
-        chunk_size: int = 1024,
+        client: OpenAI,
+        model_name: str,
+        chunk_size: int,
         chunk_overlap: int = 0,
     ) -> None:
         self.model_name = model_name
-        self.llm = ChatOpenAI(
-            temperature=0,
-            openai_api_key=os.environ["OPENAI_API_KEY"],
-            model_name=self.model_name,
-        )
+        self.client = client
         self.title = title
         self.text = text
         self.list_split_text = self._split_text(
@@ -44,7 +34,7 @@ class ArticleGenerator:
         texts = text_splitter.split_text(self.text)
         return texts
 
-    def _summarize_transcript(self, title: str, text: str, max_tokens: int) -> str:
+    def summarize_transcript(self, title: str, text: str, max_tokens: int) -> str:
         """Generate summary from the transcript"""
         user_message = f"""
         Your task is to expertly summarize the content of a podcast.
@@ -63,13 +53,13 @@ class ArticleGenerator:
         {text}
         """
 
-        res = openai.ChatCompletion.create(
+        res = self.client.chat.completions.create(
             model=self.model_name,
             messages=[{"role": "user", "content": user_message}],
             max_tokens=max_tokens,
         )
 
-        return res["choices"][0]["message"]["content"]
+        return res.choices[0].message.content
 
     def get_list_summary(self, max_tokens: int) -> list[str]:
         """Generate summaries from transcripts"""
@@ -101,10 +91,10 @@ class ArticleGenerator:
         {summaries}
         """
 
-        res = openai.ChatCompletion.create(
+        res = self.client.chat.completions.create(
             model=self.model_name,
             messages=[{"role": "user", "content": user_message}],
             max_tokens=max_tokens,
         )
 
-        return res["choices"][0]["message"]["content"]
+        return res.choices[0].message.content

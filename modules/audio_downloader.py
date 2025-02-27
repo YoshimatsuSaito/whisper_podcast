@@ -41,6 +41,7 @@ def download_and_chunk_audio(
     Input: url or list of url about the mp3 files
     Output: AudioPathDataCollection
     """
+    output_dir.mkdir(parents=True, exist_ok=True)
     file_path_to_chunk = _download_audio(url=url, title=title, output_dir=output_dir)
     chunk_dir = _chunk_audio(file_path_to_chunk, chunk_size=chunk_size)
     return chunk_dir
