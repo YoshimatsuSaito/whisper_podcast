@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import dotenv
@@ -12,7 +11,8 @@ from modules.transcriber import Transcriber
 from modules.translator import translate
 
 dotenv.load_dotenv()
-OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR"))
+
+OUTPUT_DIR = Path("./output")
 
 
 @st.cache_data
