@@ -6,7 +6,7 @@ This Streamlit application fetches metadata from a given podcast RSS link, trans
 
 ## Installation
 
-The following steps assume a Linux environment.
+The following steps assume a Linux or Mac environment.
 
 ### Python packages
 
@@ -22,9 +22,17 @@ pip install -r requirements.txt
 
 Install ffmpeg if it is not already installed in your environment.
 
+for Linux
+
 ```shell
 sudo apt update
 sudo apt install ffmpeg
+```
+
+for Mac
+
+```shell
+brew install ffmpeg
 ```
 
 ### OPENAI_API_KEY

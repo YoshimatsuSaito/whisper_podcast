@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 
 import requests
@@ -41,6 +42,9 @@ def download_and_chunk_audio(
     Input: url or list of url about the mp3 files
     Output: AudioPathDataCollection
     """
+    # remove the output directory if it exists to save space
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     file_path_to_chunk = _download_audio(url=url, title=title, output_dir=output_dir)
     chunk_dir = _chunk_audio(file_path_to_chunk, chunk_size=chunk_size)
