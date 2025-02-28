@@ -61,6 +61,11 @@ st.markdown(
     This app generates a summary of an episode of any podcasts you selected
     """
 )
+st.link_button(
+    "Search a podcast feed",
+    "https://castos.com/tools/find-podcast-rss-feed/",
+    icon=":material/search:",
+)
 url = st.text_input(
     "Enter a podcast RSS feed URL",
     value="https://podcasts.files.bbci.co.uk/p02nrsjn.rss",
