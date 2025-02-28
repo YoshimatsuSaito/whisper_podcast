@@ -13,3 +13,4 @@ streamlit
 tqdm
 urllib3
 pydub
+tiktoken
